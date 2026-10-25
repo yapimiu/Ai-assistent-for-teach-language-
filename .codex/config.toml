@@ -1,0 +1,21 @@
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+
+[agents]
+enabled = true
+default_subagent_model = "gpt-6.1-sol"
+default_subagent_reasoning_effort = "medium"
+max_concurrent_threads_per_session = 3
+max_depth = 1
+
+[agents.coder]
+description = "Implements one assigned module or change within the project architecture."
+config_file = "./agents/coder.toml"
+
+[agents.reviewer]
+description = "Reviews changes independently and reports actionable findings without editing files."
+config_file = "./agents/reviewer.toml"
+
+[agents.researcher]
+description = "Researches official sources and reports evidence, dates, and limitations without editing files."
+config_file = "./agents/researcher.toml"
