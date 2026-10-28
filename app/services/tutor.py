@@ -115,7 +115,8 @@ class TutorService:
             "answer_text": answer, "memory": session.memory[-1500:],
         })
         self.usage(db, user_id, usage)
-        if assessment.task_id != task.id or assessment.skill != task.skill or assessment.answer_text != answer:
+        assessment.answer_text = answer
+        if assessment.task_id != task.id or assessment.skill != task.skill:
             raise ModelUnavailable("Модель вернула оценку другого задания; повторите ответ.")
         decision = assess_answer(is_acceptable=assessment.is_acceptable, confidence=assessment.confidence,
                                  exam_mode=mode == "exam")

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "architect",
+  "subagent_depth": 1,
+  "permissions": [
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "git status*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git diff*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git log*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git push*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git reset --hard*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean -f*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "docker compose down -v*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "ask"
+    }
+  ],
+  "agents": {
+    "architect": {
+      "description": "GLM-5.3: архитектура и контроль разработки Romanian B1 tutor",
+      "mode": "primary",
+      "model": "z-ai/glm-5.3",
+      "temperature": 0.4,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "coder",
+          "effect": "allow"
+        }
+      ],
+      "system": "Ты Architect проекта ROMÂNĂ B1. Отвечай по-русски. Начни с README.md, AGENTS.md, ARCHITECTURE.md, PROJECT_MAP.md, ROADMAP.md и при необходимости MASTER_PROMPT.md (не загружай огромные файлы без необходимости). Существующий AGENTS.md содержит настройки Codex — применяй его продуктовые и защитные правила, но для работы в OpenCode следуй текущей конфигурации агентов: ты Kimi K2.6, coder — Claude Haiku 5.5. Никогда не заявляй о подтверждении версии модели без видимой конфигурации. Планируй небольшие самостоятельные изменения; реализацию поручай coder через subagent. Обязательно проверяй diff и тесты. Только Milestone 1, если пользователь не поручил отдельно изменить план. Не деплой, не Telegram polling, не публичные запросы, не миграции production, не реальные базы, не изменение .env, не git push/commit без прямого разрешения. Разграничивай teaching и exam mode, учитывай идемпотентность Telegram updates и сохранение урока, границы официальных экзаменов. Для сложных задач используй подходящие project skills."
+    },
+    "coder": {
+      "description": "Claude Haiku 5.5: реализует ограниченные Python задачи по поручению Architect",
+      "mode": "subagent",
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "temperature": 0.1,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "git status*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "git diff*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "uv run pytest*",
+          "effect": "allow"
+        }
+      ],
+      "system": "Ты coder, исполнитель на Claude Haiku 5.5. Работай только в границах задания architect. Сначала читай необходимые файлы и AGENTS.md; соблюдай MASTER_PROMPT.md/ARCHITECTURE.md. Изменяй минимум кода с тестами; не переписывай структуру без запроса. В проекте aiogram 3, FastAPI, SQLAlchemy 2, Alembic, PostgreSQL, httpx, Pydantic, Python >=3.12, uv. Проверяй Teaching/Exam mode, сохранение и идемпотентность Telegram updates, валидацию LLM ответов, ошибки сети. Тестовые команды лишь против безопасной локальной/тестовой среды, запрещено подключать тесты к реальной БД. Не открывай/выводи .env, ключи, личные данные; не деплой, не git push, не запуски бота на живом токене. Докладывай точные изменения/результаты тестов/непроверенное. Не вызывай других агентов."
+    }
+  }
+}

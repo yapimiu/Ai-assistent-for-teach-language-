@@ -1,11 +1,9 @@
 FROM python:3.12-slim
-COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /uvx /bin/
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /uvx /bin/
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=secret,id=build_ca \
-    if [ -f /run/secrets/build_ca ]; then \
-      SSL_CERT_FILE=/run/secrets/build_ca uv sync --system-certs --frozen --no-dev; \
-    else uv sync --frozen --no-dev; fi
+RUN uv sync --frozen --no-dev
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./

@@ -1,0 +1,73 @@
+# Production variant. Compose project dir is deploy/, so build context and env_file point to repo root.
+name: romana
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: romana
+      POSTGRES_USER: romana
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-romana}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U romana -d romana"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+  migrate:
+    build: ..
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://romana:${POSTGRES_PASSWORD:-romana}@db:5432/romana
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: ..
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://romana:${POSTGRES_PASSWORD:-romana}@db:5432/romana
+    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+  bot:
+    build: ..
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://romana:${POSTGRES_PASSWORD:-romana}@db:5432/romana
+    command: ["python", "-m", "app.bot"]
+    # Bot uses Telegram polling and exposes no HTTP port: no container healthcheck.
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+volumes:
+  postgres_data:
